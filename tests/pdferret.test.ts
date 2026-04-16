@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { Zotero } from './zotero.mock'
+import { Zotero, addAvailableFilesSpy, addFileFromURLsSpy, canFindFileForItemMock } from './zotero.mock'
+import { regularItem1, regularItem2 } from './zoteroItem.mock'
 import { PDFerret } from '../content/pdferret'
 import { providerManager } from '../content/providers'
 import { resolverManager } from '../content/resolvers'
+import type { ZoteroItem } from '../typings/zotero'
 
 // Resolver preference key (same as in resolverManager)
 const RESOLVER_PREF = 'extensions.zotero.findPDFs.resolvers'
@@ -135,6 +137,53 @@ describe('PDFerret resolver integration', () => {
 
       const resolversJson = Zotero.Prefs.get(RESOLVER_PREF, true) as string
       expect(resolversJson).toBe('')
+    })
+  })
+
+  describe('retrieveForItems', () => {
+    beforeEach(() => {
+      addAvailableFilesSpy.mockClear()
+      canFindFileForItemMock.mockReset()
+      canFindFileForItemMock.mockReturnValue(true)
+    })
+
+    it('passes eligible items to addAvailableFiles', async () => {
+      await Zotero.PDFerret.retrieveForItems([regularItem1, regularItem2] as ZoteroItem[])
+      expect(addAvailableFilesSpy).toHaveBeenCalledTimes(1)
+      expect(addAvailableFilesSpy.mock.calls[0][0]).toHaveLength(2)
+    })
+
+    it('skips ineligible items and only sends eligible ones', async () => {
+      canFindFileForItemMock.mockImplementation(() => {
+        const calls = canFindFileForItemMock.mock.calls.length
+        return calls === 1
+      })
+      await Zotero.PDFerret.retrieveForItems([regularItem1, regularItem2] as ZoteroItem[])
+      expect(addAvailableFilesSpy).toHaveBeenCalledTimes(1)
+      expect(addAvailableFilesSpy.mock.calls[0][0]).toHaveLength(1)
+    })
+
+    it('does not call addAvailableFiles when all items are ineligible', async () => {
+      canFindFileForItemMock.mockReturnValue(false)
+      await Zotero.PDFerret.retrieveForItems([regularItem1] as ZoteroItem[])
+      expect(addAvailableFilesSpy).not.toHaveBeenCalled()
+    })
+
+    it('ignores non-regular items', async () => {
+      const note = { isRegularItem: () => false } as ZoteroItem
+      await Zotero.PDFerret.retrieveForItems([note])
+      expect(addAvailableFilesSpy).not.toHaveBeenCalled()
+    })
+
+    it('force mode bypasses eligibility and calls addFileFromURLs per item', async () => {
+      addFileFromURLsSpy.mockClear()
+      Zotero.Prefs.set('pdferret.force_redownload', true)
+      canFindFileForItemMock.mockReturnValue(false)
+
+      await Zotero.PDFerret.retrieveForItems([regularItem1, regularItem2] as ZoteroItem[])
+
+      expect(addAvailableFilesSpy).not.toHaveBeenCalled()
+      expect(addFileFromURLsSpy).toHaveBeenCalledTimes(2)
     })
   })
 

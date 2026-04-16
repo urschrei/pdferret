@@ -10,6 +10,8 @@ pdferret-menu-all = Update All PDFs
 pdferret-prefs-title = PDF Provider Settings
 pdferret-prefs-automatic =
     .label = Automatic PDF Download
+pdferret-prefs-force-redownload =
+    .label = Force re-download (add another attachment even if a PDF or EPUB already exists)
 pdferret-prefs-provider-label =
     .value = Provider:
 pdferret-prefs-provider-url-label = { $provider } URL:
@@ -40,6 +42,10 @@ pdferret-prefs-btn-save =
 pdferret-prefs-btn-delete = Delete
 pdferret-prefs-btn-add =
     .label = + Add Custom Provider
+
+# Retrieval Progress
+pdferret-retrieval-skipped = Skipped { $count } item(s) with existing PDF or EPUB attachments
+pdferret-retrieval-force-summary = Force re-download: { $succeeded } succeeded, { $failed } failed
 
 # Validation Messages
 pdferret-validation-name-required = Please enter a provider name.

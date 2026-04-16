@@ -1,6 +1,6 @@
 {
   "name": "pdferret",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Download papers and books by DOI from various providers",
   "license": "BlueOak-1.0.0",
   "scripts": {
@@ -33,7 +33,7 @@
     "releaseURL": "https://github.com/urschrei/pdferret/releases/download/release/",
     "iconURL": "chrome://pdferret/skin/pdferret-logo.svg",
     "minVersion": "7.0",
-    "maxVersion": "8.*"
+    "maxVersion": "9.*"
   },
   "devDependencies": {
     "@types/node": "^25.2.0",
@@ -48,7 +48,7 @@
     "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.16",
     "zotero-plugin": "^8.0.8",
-    "zotero-plugin-toolkit": "^5.1.0-beta.13",
+    "zotero-plugin-toolkit": "^5.1.2",
     "zotero-types": "^4.0.5"
   }
 }

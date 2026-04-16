@@ -13,9 +13,8 @@ class ToolsPane {
       return isProcessable && isEditable
     })
 
-    // Use Zotero's built-in PDF finding which uses our registered resolvers
     if (items.length > 0) {
-      await Zotero.Attachments.addAvailablePDFs(items)
+      await Zotero.PDFerret.retrieveForItems(items)
     }
   }
 }
