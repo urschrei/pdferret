@@ -1,7 +1,7 @@
-import type { IZotero } from '../typings/zotero'
+import type { IZotero, ZoteroItem } from '../typings/zotero'
 import { ItemPane } from './itemPane'
 import { ToolsPane } from './toolsPane'
-import { MenuManager } from 'zotero-plugin-toolkit'
+import { UITool } from 'zotero-plugin-toolkit'
 import { providerManager } from './providers'
 import { resolverManager } from './resolvers'
 import type { Provider } from './providers'
@@ -11,8 +11,7 @@ declare const Zotero: IZotero
 declare const window: Window | undefined
 declare const rootURI: string | undefined
 
-// Menu manager for Zotero 7/8
-const Menu = new MenuManager()
+const ui = new UITool()
 
 class PDFerret {
   private static readonly DEFAULT_AUTOMATIC_PDF_DOWNLOAD = true
@@ -53,6 +52,71 @@ class PDFerret {
   }
 
   /**
+   * Run PDF retrieval for the given items.
+   *
+   * Default: filter to items that don't already have a PDF/EPUB and delegate
+   * to Zotero's native addAvailableFiles. Surfaces a notice when items are skipped.
+   *
+   * Force re-download mode: bypass the eligibility gate and call addFileFromURLs
+   * per item, which adds an additional attachment alongside any existing one.
+   */
+  public async retrieveForItems(items: ZoteroItem[]): Promise<void> {
+    const regularItems = items.filter(item => item.isRegularItem())
+    if (regularItems.length === 0) return
+
+    if (this.isForceRedownload()) {
+      await this.forceRedownload(regularItems)
+      return
+    }
+
+    const eligible = regularItems.filter(item => Zotero.Attachments.canFindFileForItem(item))
+    const skipped = regularItems.length - eligible.length
+
+    if (skipped > 0) {
+      this.showProgressNotice(getString('retrieval-skipped', { count: String(skipped) }))
+    }
+
+    if (eligible.length > 0) {
+      await Zotero.Attachments.addAvailableFiles(eligible)
+    }
+  }
+
+  private async forceRedownload(items: ZoteroItem[]): Promise<void> {
+    let succeeded = 0
+    let failed = 0
+    for (const item of items) {
+      try {
+        const resolvers = Zotero.Attachments.getFileResolvers(item)
+        const result = await Zotero.Attachments.addFileFromURLs(item, resolvers)
+        if (result) {
+          succeeded++
+        } else {
+          failed++
+        }
+      } catch (err) {
+        failed++
+        Zotero.logError(err as Error)
+      }
+    }
+    this.showProgressNotice(getString('retrieval-force-summary', {
+      succeeded: String(succeeded),
+      failed: String(failed),
+    }))
+  }
+
+  private showProgressNotice(headline: string): void {
+    try {
+      const pw = new Zotero.ProgressWindow()
+      pw.changeHeadline(headline)
+      pw.show()
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      pw.startCloseTimer(5000)
+    } catch (err) {
+      Zotero.logError(err as Error)
+    }
+  }
+
+  /**
    * Sync current providers to Zotero's PDF resolver preference.
    * Called on startup and when providers are modified.
    */
@@ -62,49 +126,56 @@ class PDFerret {
     resolverManager.syncProviders(providers, automatic)
   }
 
-  // Register context menu items using MenuManager
-  private registerMenus(_win: Window): void {
+  private registerMenus(win: Window): void {
     try {
-      // Icon path using rootURI (chrome:// URLs don't work in Zotero 7/8 bootstrap plugins)
+      const doc = win.document
       const iconPath = typeof rootURI !== 'undefined' ? `${rootURI}skin/default/pdferret-logo.svg` : ''
 
-      // Register item context menu item
-      Menu.register('item', {
-        tag: 'menuitem',
-        id: 'pdferret-itemmenu',
-        label: getString('menu-item'),
-        icon: iconPath,
-        commandListener: () => { void this.ItemPane.updateSelectedItems() },
-      })
-      this.menuIds.push('pdferret-itemmenu')
+      const targets: { popupId: string; id: string; label: string; handler: () => void }[] = [
+        {
+          popupId: 'zotero-itemmenu',
+          id: 'pdferret-itemmenu',
+          label: getString('menu-item'),
+          handler: () => { void this.ItemPane.updateSelectedItems() },
+        },
+        {
+          popupId: 'zotero-collectionmenu',
+          id: 'pdferret-collectionmenu',
+          label: getString('menu-collection'),
+          handler: () => { void this.ItemPane.updateSelectedEntity('') },
+        },
+        {
+          popupId: 'menu_ToolsPopup',
+          id: 'pdferret-tools-updateall',
+          label: getString('menu-all'),
+          handler: () => { void this.ToolsPane.updateAll() },
+        },
+      ]
 
-      // Register collection context menu item
-      Menu.register('collection', {
-        tag: 'menuitem',
-        id: 'pdferret-collectionmenu',
-        label: getString('menu-collection'),
-        icon: iconPath,
-        commandListener: () => { void this.ItemPane.updateSelectedEntity('') },
-      })
-      this.menuIds.push('pdferret-collectionmenu')
-
-      // Register tools menu item
-      Menu.register('menuTools', {
-        tag: 'menuitem',
-        id: 'pdferret-tools-updateall',
-        label: getString('menu-all'),
-        icon: iconPath,
-        commandListener: () => { void this.ToolsPane.updateAll() },
-      })
-      this.menuIds.push('pdferret-tools-updateall')
+      for (const t of targets) {
+        const popup = doc.getElementById(t.popupId)
+        if (!popup) continue
+        ui.appendElement({
+          tag: 'menuitem',
+          id: t.id,
+          attributes: {
+            label: t.label,
+            class: 'menuitem-iconic',
+            image: iconPath,
+          },
+          listeners: [
+            { type: 'command', listener: t.handler },
+          ],
+        }, popup)
+        this.menuIds.push(t.id)
+      }
     } catch (err) {
       Zotero.logError(err as Error)
     }
   }
 
-  // Unregister all menu items
   private unregisterMenus(): void {
-    Menu.unregisterAll()
+    ui.unregisterAll()
     this.menuIds = []
   }
 
@@ -123,6 +194,10 @@ class PDFerret {
     return Zotero.Prefs.get('pdferret.automatic_pdf_download') as boolean
   }
 
+  public isForceRedownload(): boolean {
+    return Zotero.Prefs.get(PDFerret.PREF_FORCE_REDOWNLOAD) === true
+  }
+
   // Legacy methods - kept for compatibility
   public load(): void {
     // No-op - resolvers are registered on startup
@@ -136,21 +211,24 @@ class PDFerret {
   private static readonly XUL_NS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'
   private static readonly PREF_AUTOMATIC = 'pdferret.automatic_pdf_download'
   private static readonly PREF_ACTIVE_PROVIDER = 'pdferret.active_provider'
+  private static readonly PREF_FORCE_REDOWNLOAD = 'pdferret.force_redownload'
 
   public onPrefsLoad(doc: Document): void {
     Zotero.debug('PDFerret: onPrefsLoad called')
 
     const automaticCheckbox = doc.getElementById('pref-automatic-pdf-download') as HTMLInputElement | null
+    const forceCheckbox = doc.getElementById('pref-force-redownload') as HTMLInputElement | null
     const providerSelect = doc.getElementById('pref-provider-select') as HTMLSelectElement | null
     const builtinUrlInput = doc.getElementById('pref-builtin-url') as HTMLInputElement | null
 
-    if (!automaticCheckbox || !providerSelect || !builtinUrlInput) {
+    if (!automaticCheckbox || !forceCheckbox || !providerSelect || !builtinUrlInput) {
       Zotero.debug('PDFerret: preferences DOM elements not found')
       return
     }
 
     // Set initial values
     automaticCheckbox.checked = Zotero.Prefs.get(PDFerret.PREF_AUTOMATIC) !== false
+    forceCheckbox.checked = Zotero.Prefs.get(PDFerret.PREF_FORCE_REDOWNLOAD) === true
 
     // Populate provider dropdown
     this.populateProviderDropdown(doc)
@@ -162,6 +240,11 @@ class PDFerret {
       Zotero.Prefs.set(PDFerret.PREF_AUTOMATIC, cb.checked)
       // Re-sync resolvers with new automatic setting
       this.syncResolvers()
+    })
+
+    forceCheckbox.addEventListener('command', () => {
+      const cb = doc.getElementById('pref-force-redownload') as HTMLInputElement
+      Zotero.Prefs.set(PDFerret.PREF_FORCE_REDOWNLOAD, cb.checked)
     })
 
     providerSelect.addEventListener('command', () => {

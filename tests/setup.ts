@@ -7,9 +7,9 @@ globalThis.DOMParser = new JSDOM().window.DOMParser
 
 // Mock zotero-plugin-toolkit
 vi.mock('zotero-plugin-toolkit', () => ({
-  MenuManager: class {
-    register(_menu: string, _options: Record<string, unknown>): void {
-      // Mock implementation
+  UITool: class {
+    appendElement(_props: Record<string, unknown>, _container: Element): Node {
+      return {} as Node
     }
 
     unregisterAll(): void {

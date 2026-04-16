@@ -24,10 +24,13 @@ interface ZoteroItem {
   id: string
   libraryID: string
   getField: (field: string, unformatted?: boolean, includeBaseMapped?: boolean) => string
+  getDisplayTitle?: () => string
   isRegularItem: () => boolean
   getAttachments: () => number[]
   attachmentContentType?: string
 }
+
+type FileResolver = unknown
 
 interface ProgressWindow {
   changeHeadline: (headline: string, icon?: string, postText?: string) => void
@@ -74,7 +77,10 @@ interface IZotero {
 
   Attachments: {
     importFromURL: (options: Record<string, any>) => Promise<ZoteroItem>
-    addAvailablePDFs: (items: ZoteroItem[]) => Promise<void>
+    addAvailableFiles: (items: ZoteroItem[]) => Promise<void>
+    addFileFromURLs: (item: ZoteroItem, urlResolvers: FileResolver[]) => Promise<ZoteroItem | false>
+    getFileResolvers: (item: ZoteroItem, methods?: string[], automatic?: boolean) => FileResolver[]
+    canFindFileForItem: (item: ZoteroItem) => boolean
   }
 
   Libraries: {

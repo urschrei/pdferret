@@ -7,8 +7,9 @@ const progressWindowSpy = vi.fn()
 // Create mockable HTTP request function
 const httpRequestMock = vi.fn()
 
-// Create spy for addAvailablePDFs
-const addAvailablePDFsSpy = vi.fn()
+const addAvailableFilesSpy = vi.fn()
+const addFileFromURLsSpy = vi.fn()
+const canFindFileForItemMock = vi.fn(() => true)
 
 const Zotero: IZotero = new class {
   public PDFerret
@@ -73,9 +74,22 @@ const Zotero: IZotero = new class {
       return Promise.resolve(regularItem1)
     }
 
-    public async addAvailablePDFs(items: ZoteroItem[]): Promise<void> {
-      addAvailablePDFsSpy(items)
+    public async addAvailableFiles(items: ZoteroItem[]): Promise<void> {
+      addAvailableFilesSpy(items)
       return Promise.resolve()
+    }
+
+    public async addFileFromURLs(item: ZoteroItem, _urlResolvers: unknown[]): Promise<ZoteroItem | false> {
+      addFileFromURLsSpy(item)
+      return Promise.resolve(item)
+    }
+
+    public getFileResolvers(_item: ZoteroItem): unknown[] {
+      return []
+    }
+
+    public canFindFileForItem(_item: ZoteroItem): boolean {
+      return canFindFileForItemMock()
     }
   }
 
@@ -104,4 +118,4 @@ const Zotero: IZotero = new class {
   }
 }
 
-export { Zotero, progressWindowSpy, httpRequestMock, addAvailablePDFsSpy }
+export { Zotero, progressWindowSpy, httpRequestMock, addAvailableFilesSpy, addFileFromURLsSpy, canFindFileForItemMock }

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "PDFerret for Zotero",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Download papers and books by DOI from various providers",
   "homepage_url": "https://github.com/urschrei/pdferret",
   "author": "sth",
@@ -14,7 +14,7 @@
       "id": "pdferret@example.com",
       "update_url": "https://github.com/urschrei/pdferret/releases/download/release/updates.json",
       "strict_min_version": "7.0",
-      "strict_max_version": "8.*"
+      "strict_max_version": "9.*"
     }
   }
 }
