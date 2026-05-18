@@ -13,10 +13,10 @@ export const SCIHUB_PROVIDER: Provider = {
 export const ANNAS_ARCHIVE_PROVIDER: Provider = {
   id: 'annas-archive',
   name: "Anna's Archive SciDB",
-  urlTemplate: 'https://annas-archive.org/scidb/{DOI}/',
+  urlTemplate: 'https://annas-archive.gl/scidb/{DOI}/',
   isBuiltin: true,
-  // Anna's Archive uses a slow download link
-  selector: 'a[href*="/slow_download"]',
+  // Anna's Archive serves a direct PDF link via a rotating partner CDN; the href ends in .pdf
+  selector: 'a[href$=".pdf"]',
   attribute: 'href',
 }
 
