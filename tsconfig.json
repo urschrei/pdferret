@@ -8,8 +8,6 @@
     "removeComments": false,
     "preserveConstEnums": false,
     "sourceMap": true,
-    "downlevelIteration": true,
-    "ignoreDeprecations": "6.0",
     "strict": true,
     "noImplicitReturns": true,
     "noImplicitAny": false,
