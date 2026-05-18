@@ -44,8 +44,8 @@ describe('PDFerret resolver integration', () => {
       // Check Anna's Archive resolver
       const annas = resolvers.find((r: any) => r.name === "Anna's Archive SciDB")
       expect(annas).toBeDefined()
-      expect(annas.url).toContain('annas-archive.org')
-      expect(annas.selector).toContain('slow_download')
+      expect(annas.url).toContain('annas-archive.gl')
+      expect(annas.selector).toContain('.pdf')
       expect(annas.pdferretManaged).toBe(true)
     })
 
