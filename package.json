@@ -1,6 +1,6 @@
 {
   "name": "pdferret",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Download papers and books by DOI from various providers",
   "license": "BlueOak-1.0.0",
   "scripts": {
@@ -33,14 +33,14 @@
     "releaseURL": "https://github.com/urschrei/pdferret/releases/download/release/",
     "iconURL": "chrome://pdferret/skin/pdferret-logo.svg",
     "minVersion": "7.0",
-    "maxVersion": "9.*"
+    "maxVersion": "12.*"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.1.0",
     "@vitest/coverage-v8": "^4.1.9",
     "esbuild": "^0.28.1",
     "eslint": "^10.6.0",
-    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsdoc": "^63.0.10",
     "globals": "^17.7.0",
     "jsdom": "^29.1.1",

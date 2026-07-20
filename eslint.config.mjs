@@ -1,6 +1,5 @@
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
-import importPlugin from 'eslint-plugin-import'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
 import globals from 'globals'
 
@@ -46,7 +45,6 @@ export default tseslint.config(
       },
     },
     plugins: {
-      import: importPlugin,
       jsdoc: jsdocPlugin,
     },
     rules: {
@@ -132,7 +130,6 @@ export default tseslint.config(
         'undefined',
       ],
       'id-match': 'error',
-      'import/order': 'off',
       'linebreak-style': ['error', 'unix'],
       'max-classes-per-file': 'off',
       'max-len': ['warn', { code: 240 }],

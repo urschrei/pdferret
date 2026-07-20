@@ -1,6 +1,6 @@
 # PDFerret
 
-This is an add-on for [Zotero](https://www.zotero.org/) 8.x and [Juris-M](https://juris-m.github.io/) that enables automatic download of PDFs for items with a DOI using various configurable providers.
+This is an add-on for [Zotero](https://www.zotero.org/) 8.x and above and [Juris-M](https://juris-m.github.io/) that enables automatic download of PDFs for items with a DOI using various configurable providers.
 
 ## Quick Start Guide
 
