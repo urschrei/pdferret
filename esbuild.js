@@ -87,31 +87,6 @@ function copyPreferences() {
   console.log('Copied preferences.xhtml to build/')
 }
 
-// Patch zotero-plugin-toolkit's _importESModule to fix Zotero 8 deprecation warnings
-// The toolkit checks `typeof ChromeUtils.import === "undefined"` but in Zotero 8,
-// ChromeUtils.import exists (just deprecated). We need to check for importESModule first.
-function patchImportESModule() {
-  const pdferretPath = path.join(__dirname, 'build', 'content', 'pdferret.js')
-  let content = fs.readFileSync(pdferretPath, 'utf-8')
-
-  // Replace the flawed _importESModule function
-  const oldPattern = /function _importESModule\(path\) \{\s*if \(typeof ChromeUtils\.import === "undefined"\) return ChromeUtils\.importESModule\(path, \{ global: "contextual" \}\);\s*if \(path\.endsWith\("\.sys\.mjs"\)\) path = path\.replace\(\/\\\.sys\\\.mjs\$\/, "\.jsm"\);\s*return ChromeUtils\.import\(path\);\s*\}/
-
-  const newFunction = `function _importESModule(path) {
-    if (typeof ChromeUtils.importESModule !== "undefined") return ChromeUtils.importESModule(path, { global: "contextual" });
-    if (path.endsWith(".sys.mjs")) path = path.replace(/\\.sys\\.mjs$/, ".jsm");
-    return ChromeUtils.import(path);
-  }`
-
-  if (oldPattern.test(content)) {
-    content = content.replace(oldPattern, newFunction)
-    fs.writeFileSync(pdferretPath, content)
-    console.log('Patched _importESModule for Zotero 8 compatibility')
-  } else {
-    console.log('Warning: Could not find _importESModule pattern to patch')
-  }
-}
-
 async function build() {
   // Copy assets first
   copyManifest()
@@ -153,9 +128,6 @@ var onMainWindowUnload = PDFerretBootstrap.onMainWindowUnload;
     footer: { js: '\n}' },
   })
   console.log('Built pdferret.js')
-
-  // Patch toolkit's _importESModule for Zotero 8 compatibility
-  patchImportESModule()
 }
 
 build().catch(err => {
