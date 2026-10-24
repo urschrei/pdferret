@@ -3,14 +3,14 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     open-pull-requests-limit: 20
     groups:
-      # Specify a name for the group, which will be used in pull request titles
-      # and branch names
-      js-non-security-dependencies:
-        # Define patterns to include dependencies in the group (based on
-        # dependency name)
-        applies-to: version-updates # Applies the group rule to version updates
+      js-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "*"
+      js-dependencies-security:
+        applies-to: security-updates
         patterns:
           - "*"
